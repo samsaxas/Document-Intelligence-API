@@ -174,3 +174,36 @@ pytest backend/tests -v
 | `POST` | `/api/benchmark/run` | Run real-time PyTorch vs TF-IDF benchmark |
 | `POST` | `/api/pii/redact` | Scan and sanitize raw text for sensitive PII |
 | `GET` | `/api/stats` | Pipeline processing statistics and STP rate |
+
+---
+
+## Results
+
+### Document classification benchmark (7 classes)
+
+Evaluated with the built-in benchmark (`POST /api/benchmark/run`) on a held-out set of **16 short documents**
+(2-3 per class) against a training corpus of **42 documents**. Four runs were recorded in `doc_intel.db`
+(each app start retrains both models):
+
+| Run | PyTorch accuracy | PyTorch macro-F1 | TF-IDF + LR accuracy | TF-IDF + LR macro-F1 |
+|---|---|---|---|---|
+| 1 | 37.5% | 0.374 | 100% | 1.000 |
+| 2 | 62.5% | 0.610 | 100% | 1.000 |
+| 3 | 75.0% | 0.739 | 100% | 1.000 |
+| 4 | 43.8% | 0.449 | 100% | 1.000 |
+| **Mean** | **54.7%** | **0.543** | **100%** | **1.000** |
+
+Average inference latency per document (classification only, excluding OCR): PyTorch 1.2-2.5 ms, TF-IDF + LR 1.8-3.5 ms.
+
+**Reading these numbers honestly**
+- The TF-IDF + Logistic Regression baseline outperformed the PyTorch model in all four runs; PyTorch results varied widely between runs (37.5%-75.0%), which points to instability on a 42-document training set.
+- The 16-document test set is very small (one document = 6.25 points of accuracy), and one test document (`INV-2024-5501`) is a near-duplicate of a training document. A leave-one-out check of the same TF-IDF + LR setup on the 42 training documents gives **88.1% accuracy (37/42), macro-F1 0.877**, a more conservative estimate of the baseline.
+- Documents are short hand-written text samples, not a large real-world scanned corpus; these results do not predict accuracy on real scans.
+
+### Tests
+13 pytest tests across 5 files (API, classifier, extractor, OCR, PII). <!-- add the pass count from your own `pytest -v` run -->
+
+### Planned improvements
+- Larger, de-duplicated labelled dataset with a proper train/test split.
+- Fixed random seeds and averaged results across several seeds, reported as mean +/- std.
+- Fine-tuned transformer classifier compared against the baseline.
