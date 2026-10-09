@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: doc_intel_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - CLASSIFICATION_CONFIDENCE_THRESHOLD=0.85
+      - EXTRACTION_CONFIDENCE_THRESHOLD=0.80
+    volumes:
+      - doc_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    container_name: doc_intel_frontend
+    ports:
+      - "80:80"
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  doc_data:
+    driver: local
