@@ -15,9 +15,8 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY backend/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir -r requirements.txt
 # Copy application source
 COPY backend/app /app/app
 COPY sample_documents /sample_documents
